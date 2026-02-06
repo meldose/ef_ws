@@ -1,0 +1,77 @@
+2026-02-06 22:47:09,480  ERROR     PySide6 is required – install via 'pip install pyside6 pyqtgraph'
+2026-02-06 22:47:09,481  ERROR     PySide6 is required for run_geoff_gui.py – install with:
+    pip install pyside6 pyqtgraph
+2026-02-06 22:47:35,829  ERROR     PySide6 is required – install via 'pip install pyside6 pyqtgraph'
+2026-02-06 22:47:35,829  ERROR     PySide6 is required for run_geoff_gui.py – install with:
+    pip install pyside6 pyqtgraph
+2026-02-06 22:49:40,945  ERROR     Traceback (most recent call last):
+2026-02-06 22:49:40,945  ERROR       File "/home/melodse/ef_ws/g1/scripts/run_geoff_gui.py", line 2665, in <module>
+2026-02-06 22:49:40,945  ERROR     main()
+2026-02-06 22:49:40,945  ERROR       File "/home/melodse/ef_ws/g1/scripts/run_geoff_gui.py", line 2646, in main
+2026-02-06 22:49:40,946  ERROR     window = GeoffWindow(
+2026-02-06 22:49:40,946  ERROR     ^
+2026-02-06 22:49:40,946  ERROR     ^
+2026-02-06 22:49:40,946  ERROR     ^
+2026-02-06 22:49:40,946  ERROR     ^
+2026-02-06 22:49:40,946  ERROR     ^
+2026-02-06 22:49:40,946  ERROR     ^
+2026-02-06 22:49:40,946  ERROR     ^
+2026-02-06 22:49:40,946  ERROR     ^
+2026-02-06 22:49:40,946  ERROR     ^
+2026-02-06 22:49:40,946  ERROR     ^
+2026-02-06 22:49:40,946  ERROR     ^
+2026-02-06 22:49:40,946  ERROR     ^
+2026-02-06 22:49:40,946  ERROR       File "/home/melodse/ef_ws/g1/scripts/run_geoff_gui.py", line 431, in __init__
+2026-02-06 22:49:40,947  ERROR     import pyqtgraph.opengl as gl  # type: ignore
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,947  ERROR     ^
+2026-02-06 22:49:40,948  ERROR     ^
+2026-02-06 22:49:40,948  ERROR     ^
+2026-02-06 22:49:40,948  ERROR     ^
+2026-02-06 22:49:40,948  ERROR     ^
+2026-02-06 22:49:40,948  ERROR     ^
+2026-02-06 22:49:40,948  ERROR     ^
+2026-02-06 22:49:40,948  ERROR       File "/home/melodse/ef_ws/g1/venv/lib/python3.12/site-packages/pyqtgraph/opengl/__init__.py", line 1, in <module>
+2026-02-06 22:49:40,948  ERROR     from . import shaders
+2026-02-06 22:49:40,948  ERROR       File "/home/melodse/ef_ws/g1/venv/lib/python3.12/site-packages/pyqtgraph/opengl/shaders.py", line 1, in <module>
+2026-02-06 22:49:40,948  ERROR     from OpenGL import GL
+2026-02-06 22:49:40,948  ERROR     ModuleNotFoundError
+2026-02-06 22:49:40,948  ERROR     :
+2026-02-06 22:49:40,948  ERROR     No module named 'OpenGL'
+2026-02-06 22:50:29,800  INFO      [ChannelFactory] create domain error. msg:
+2026-02-06 22:50:29,801  INFO      Occurred upon initialisation of a cyclonedds.domain.Domain
+2026-02-06 22:50:29,801  ERROR     [run_geoff_gui] Tele-op disabled:
+2026-02-06 22:50:29,801  ERROR     channel factory init error.
+2026-02-06 22:50:29,818  ERROR     [run_geoff_gui] Arm control disabled:
+2026-02-06 22:50:29,824  ERROR     'NoneType' object has no attribute '_ref'
+2026-02-06 22:50:29,824  ERROR     [run_geoff_gui] Dex3 hand control disabled:
+2026-02-06 22:50:29,824  ERROR     No module named 'unitree_sdk2py.dex3'
+2026-02-06 22:50:29,825  ERROR     [run_geoff_stack] RealSense receiver disabled:
+2026-02-06 22:50:29,827  ERROR     No module named 'gi'
+2026-02-06 22:50:29,827  INFO      [ChannelFactory] create domain error. msg:
+2026-02-06 22:50:29,828  INFO      Occurred upon initialisation of a cyclonedds.domain.Domain
+2026-02-06 22:50:29,828  ERROR     [run_geoff_gui] Battery monitor disabled:
+2026-02-06 22:50:29,896  ERROR     Could not subscribe to any battery SOC topic
+2026-02-06 22:50:29,944  ERROR     [run_geoff_gui] SLAM thread disabled:
+2026-02-06 22:50:29,945  ERROR     No module named 'open3d'
