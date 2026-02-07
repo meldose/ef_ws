@@ -8,6 +8,7 @@ INTERFACE = "eth0"
 
 CYCLONEDDS_URI = "<CycloneDDS><Domain><Tracing><Category>none</Category></Tracing></Domain></CycloneDDS>"  # Disable tracing to avoid CycloneDDS fortify crash; set to None to keep env
 
+USE_JOYSTICK = 1 # Whether to use joystick to control the robot, if False, the robot will be controlled by keyboard
 USE_JOYSTICK = 0 # Simulate Unitree WirelessController using a gamepad
 JOYSTICK_TYPE = "xbox" # support "xbox" and "switch" gamepad layout
 JOYSTICK_DEVICE = 0 # Joystick number
