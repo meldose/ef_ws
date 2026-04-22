@@ -6,6 +6,7 @@ import asyncio
 import json
 import logging
 import os
+import platform
 import signal
 import sys
 import time
@@ -44,6 +45,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--heartbeat-interval", type=float, default=10.0, help="Heartbeat interval in seconds.")
     parser.add_argument("--timeout", type=float, default=30.0, help="HTTP timeout in seconds.")
     parser.add_argument("--skill-id", default="navigation_pro", help="Skill id to test for compatibility.")
+    parser.add_argument(
+        "--skip-download",
+        action="store_true",
+        help="Skip the example placeholder skill download after a compatible result.",
+    )
     parser.add_argument(
         "--fingerprint-path",
         default=str(DEFAULT_FINGERPRINT_PATH),
@@ -133,17 +139,29 @@ class AltegroGatewayClient:
             return await response.json()
 
     async def check_skill_compatibility(self, skill_id: str) -> dict[str, Any]:
+        return await self.check_skill_compatibility_for(skill_id, {})
+
+    async def check_skill_compatibility_for(self, skill_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         assert self.session is not None
         url = f"{self.endpoint}/api/v1/skills/{skill_id}/compatibility"
-        async with self.session.get(url, params={"device_id": self.device_id}) as response:
+        request_payload = {"device_id": self.device_id, **payload}
+        async with self.session.post(url, json=request_payload) as response:
+            response.raise_for_status()
+            return await response.json()
+
+    async def download_skill(self, skill_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        assert self.session is not None
+        url = f"{self.endpoint}/api/v1/skills/{skill_id}/download"
+        async with self.session.post(url, json=payload) as response:
             response.raise_for_status()
             return await response.json()
 
 
 class RobotTelemetryCollector:
-    def __init__(self, robot: Robot, fingerprint: dict[str, Any]) -> None:
+    def __init__(self, robot: Robot, fingerprint: dict[str, Any], runtime_defaults: dict[str, Any]) -> None:
         self.robot = robot
         self.fingerprint = fingerprint
+        self.runtime_defaults = runtime_defaults
 
     def build_device_registration(self) -> dict[str, Any]:
         base = dict(self.fingerprint)
@@ -209,6 +227,35 @@ class RobotTelemetryCollector:
             "is_moving": robot_state.get("is_moving"),
         }
 
+    def build_skill_inventory(self) -> dict[str, Any]:
+        skill_settings = self.runtime_defaults.get("skills", {}) if isinstance(self.runtime_defaults.get("skills"), dict) else {}
+        updates = self.runtime_defaults.get("updates", {}) if isinstance(self.runtime_defaults.get("updates"), dict) else {}
+        network = self.runtime_defaults.get("network", {}) if isinstance(self.runtime_defaults.get("network"), dict) else {}
+
+        hardware = dict(self.fingerprint)
+        hardware.setdefault("manufacturer", "Unitree")
+        hardware.setdefault("model", "G1")
+        hardware["network_interface"] = self.robot.iface
+        hardware["domain_id"] = self.robot.domain_id
+
+        software = {
+            "runtime": "altegro_client",
+            "runtime_version": "0.1.0",
+            "platform": platform.platform(),
+            "python_version": platform.python_version(),
+            "os_version": self.fingerprint.get("os_version"),
+            "firmware_version": self.fingerprint.get("firmware_version"),
+            "skills_repository_path": skill_settings.get("repository_path"),
+            "max_concurrent_skills": skill_settings.get("max_concurrent_skills"),
+            "default_skill_timeout": skill_settings.get("default_timeout"),
+            "fallback_version": updates.get("fallback_version"),
+            "network_timeout": network.get("timeout"),
+        }
+        return {
+            "hardware": hardware,
+            "software": software,
+        }
+
 
 class AltegroRuntimeClient:
     def __init__(
@@ -219,6 +266,7 @@ class AltegroRuntimeClient:
         telemetry_interval: float,
         heartbeat_interval: float,
         skip_compatibility: bool = False,
+        skip_download: bool = False,
     ) -> None:
         self.gateway = gateway
         self.telemetry = telemetry
@@ -226,6 +274,7 @@ class AltegroRuntimeClient:
         self.telemetry_interval = float(telemetry_interval)
         self.heartbeat_interval = float(heartbeat_interval)
         self.skip_compatibility = skip_compatibility
+        self.skip_download = skip_download
         self.shutdown_event = asyncio.Event()
 
     async def initialize(self) -> None:
@@ -251,8 +300,19 @@ class AltegroRuntimeClient:
     async def check_compatibility_once(self) -> None:
         if self.skip_compatibility or not self.skill_id:
             return
-        response = await self.gateway.check_skill_compatibility(self.skill_id)
+        inventory = self.telemetry.build_skill_inventory()
+        response = await self.gateway.check_skill_compatibility_for(self.skill_id, inventory)
         LOGGER.info("Skill compatibility for %s: %s", self.skill_id, response)
+        if response.get("compatible") and not self.skip_download:
+            download_request = {
+                "device_id": self.gateway.device_id,
+                "compatible": True,
+                "compatibility_checked_at": response.get("checked_at"),
+                "hardware": inventory.get("hardware"),
+                "software": inventory.get("software"),
+            }
+            download_response = await self.gateway.download_skill(self.skill_id, download_request)
+            LOGGER.info("Downloaded placeholder skill package for %s: %s", self.skill_id, download_response)
 
     async def telemetry_loop(self) -> None:
         while not self.shutdown_event.is_set():
@@ -349,7 +409,7 @@ async def async_main() -> int:
         api_key=args.api_key,
         timeout=args.timeout,
     )
-    telemetry = RobotTelemetryCollector(robot=robot, fingerprint=fingerprint)
+    telemetry = RobotTelemetryCollector(robot=robot, fingerprint=fingerprint, runtime_defaults=runtime_defaults)
     runtime = AltegroRuntimeClient(
         gateway=gateway,
         telemetry=telemetry,
@@ -357,6 +417,7 @@ async def async_main() -> int:
         telemetry_interval=telemetry_interval,
         heartbeat_interval=heartbeat_interval,
         skip_compatibility=args.skip_compatibility,
+        skip_download=args.skip_download,
     )
 
     install_signal_handlers(runtime)
