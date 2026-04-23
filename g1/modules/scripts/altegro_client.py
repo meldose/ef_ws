@@ -40,7 +40,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--api-key", default="test_api_key", help="API key for the remote gateway.")
     parser.add_argument("--iface", default="eth0", help="Robot SDK network interface.")
     parser.add_argument("--domain-id", type=int, default=0, help="DDS domain id.")
-    parser.add_argument("--no-safety-boot", action="store_true", help="Skip safety boot when connecting to the robot.")
+    parser.add_argument(
+        "--no-safety-boot",
+        action="store_true",
+        help="Deprecated no-op. altegro_client always skips safety boot and never runs motion-producing startup commands.",
+    )
     parser.add_argument("--telemetry-interval", type=float, default=15.0, help="Telemetry push interval in seconds.")
     parser.add_argument("--heartbeat-interval", type=float, default=10.0, help="Heartbeat interval in seconds.")
     parser.add_argument("--timeout", type=float, default=30.0, help="HTTP timeout in seconds.")
@@ -392,11 +396,15 @@ async def async_main() -> int:
     fingerprint = load_json_file(args.fingerprint_path)
     fingerprint.setdefault("device_id", args.device_id)
 
+    LOGGER.info(
+        "Starting altegro_client in passive mode: safety boot and hanged boot sequences are disabled; no motion commands will be sent during startup."
+    )
+
     try:
         robot = Robot(
             iface=args.iface,
             domain_id=args.domain_id,
-            safety_boot=not args.no_safety_boot,
+            safety_boot=False,
             auto_start_sensors=True,
         )
     except Exception as exc:
