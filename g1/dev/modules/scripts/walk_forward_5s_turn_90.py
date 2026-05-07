@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+"""Simple motion demo: walk forward, then perform a turn.
+
+This is a focused beginner example showing the usual robot-motion sequence:
+connect, stand safely, command movement, stop, and handle interruptions.
+"""
+
 import argparse
 import os
 import sys
 import time
 
 
+# Add the parent module directory so direct script execution can import helpers.
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
 if PARENT_DIR not in sys.path:
@@ -16,6 +23,7 @@ from sdk_client import Robot
 
 
 def parse_args() -> argparse.Namespace:
+    # Collect motion parameters so the sequence can be adjusted from the CLI.
     parser = argparse.ArgumentParser(
         description="Walk forward for 5 seconds, then turn 90 degrees."
     )
@@ -49,9 +57,11 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    # Read user options first so connection and motion use the requested settings.
     args = parse_args()
 
     try:
+        # Connect to the robot wrapper before sending any motion commands.
         robot = Robot(
             iface=args.iface,
             domain_id=args.domain_id,
@@ -63,6 +73,7 @@ def main() -> int:
         return 1
 
     try:
+        # Most motion scripts begin by putting the robot into a stable stand state.
         print("Standing in balanced mode...")
         robot.balanced_stand()
         time.sleep(1.5)
@@ -76,6 +87,7 @@ def main() -> int:
         robot.stop()
         time.sleep(0.75)
 
+        # After walking, perform the requested turn as a separate action.
         print(f"Turning {args.turn_angle_deg:.1f} degrees...")
         turned = robot.turn_for(
             angle_deg=args.turn_angle_deg,
@@ -83,14 +95,17 @@ def main() -> int:
         )
         print(f"Turn completed: {turned}")
     except KeyboardInterrupt:
+        # Always stop the robot if the user interrupts the script.
         print("\nInterrupted. Sending stop command.")
         robot.stop()
         return 1
     except Exception as exc:
+        # Stop the robot on errors as a basic safety measure.
         print(f"Motion sequence failed: {exc}")
         robot.stop()
         return 1
 
+    # Send a final stop even after success so the robot is left in a known state.
     robot.stop()
     print("Sequence complete. Stop command sent.")
     return 0

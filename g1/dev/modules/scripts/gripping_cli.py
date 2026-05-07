@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+"""Command-line grip control for a Dex3 hand.
+
+This version is useful when you want to test hand open/close percentages without
+starting a GUI. It supports one-shot commands and an interactive prompt mode.
+"""
+
 import argparse
 import os
 import sys
 
-# Add parent directory to path to import sdk_hand
+# Add the parent directory so the shared hand SDK helper can be imported.
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 try:
@@ -15,6 +21,7 @@ except ImportError:
 
 
 def grip_targets(percent: float, hand: str = "right") -> list[float]:
+    # Translate a user-friendly grip percentage into low-level joint targets.
     return hand_grip_targets(hand, percent)
 
 
@@ -27,6 +34,7 @@ def send_grip(
     rate_hz: float,
     ramp_s: float | None,
 ) -> None:
+    # Clamp the requested value and send the corresponding grip target command.
     clamped = min(100.0, max(0.0, float(percent)))
     controller.set_targets(
         hand_grip_targets(hand, clamped),
@@ -45,6 +53,7 @@ def run_interactive(
     rate_hz: float,
     ramp_s: float | None,
 ) -> None:
+    # Keep asking for percentages until the user quits the prompt.
     print("Enter grip percentage 0-100, or 'q' to quit.")
     while True:
         try:
@@ -73,6 +82,7 @@ def run_interactive(
 
 
 def parse_args() -> argparse.Namespace:
+    # Define CLI options for connection details, target grip, and interactive mode.
     parser = argparse.ArgumentParser(description="Dex3 hand grip control CLI.")
     parser.add_argument("hand", nargs="?", choices=("left", "right"), default="right")
     parser.add_argument(
@@ -102,6 +112,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    # Create the controller once, then either run one command or enter prompt mode.
     args = parse_args()
 
     try:

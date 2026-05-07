@@ -1,8 +1,15 @@
+"""Minimal PyQt slider UI for opening and closing a Dex3 hand.
+
+The window contains a hand selector and one percentage slider. Moving the slider
+converts the chosen percentage into finger joint targets and publishes them to
+the robot hand controller.
+"""
+
 import argparse
 import os
 import sys
 
-# Add parent directory to path to import sdk_hand
+# Add the parent directory so this script can import the shared hand SDK helper.
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 try:
@@ -21,6 +28,7 @@ except ImportError:
 class GrippingApp(QWidget):
     def __init__(self, hand: str = "right", iface: str = "eth0", domain_id: int = 0):
         super().__init__()
+        # Save the connection settings and create the first hand controller.
         self.hand = hand
         self.iface = str(iface)
         self.domain_id = int(domain_id)
@@ -30,6 +38,7 @@ class GrippingApp(QWidget):
         self.initUI()
 
     def _set_controller(self, hand: str) -> None:
+        # Recreate the controller when the user switches between left and right hands.
         try:
             self.controller = Dex3HandController(
                 hand=hand,
@@ -42,6 +51,7 @@ class GrippingApp(QWidget):
             self.controller = None
 
     def initUI(self):
+        # Build a very small interface: hand selector, label, and grip slider.
         layout = QVBoxLayout()
 
         self.hand_selector = QComboBox(self)
@@ -69,10 +79,12 @@ class GrippingApp(QWidget):
         self.show()
 
     def on_hand_change(self, hand: str):
+        # Switching hands should also refresh the label and current target output.
         self._set_controller(hand)
         self.on_slider_change()
 
     def on_slider_change(self):
+        # Convert the slider percentage into finger targets for the selected hand.
         val = self.slider.value()
         targets = hand_grip_targets(self.hand, val)
         
@@ -85,7 +97,7 @@ class GrippingApp(QWidget):
 
         self.label.setText(f"{self.hand.title()} Finger Grip: {status} ({val}%)")
         
-        # Send command to the hand
+        # Send the updated command only if the controller initialized successfully.
         if self.controller:
             # We use a very short hold_s to maintain responsiveness in the UI.
             # 0.02s corresponds to one step at 50Hz.
@@ -93,6 +105,7 @@ class GrippingApp(QWidget):
 
 
 def parse_args() -> tuple[argparse.Namespace, list[str]]:
+    # Parse our own arguments and pass any remaining ones through to Qt.
     parser = argparse.ArgumentParser(description="Dex3 hand grip control UI.")
     parser.add_argument("hand", nargs="?", choices=("left", "right"), default="right")
     parser.add_argument("--iface", default="eth0", help="Network interface for DDS traffic.")
@@ -101,6 +114,7 @@ def parse_args() -> tuple[argparse.Namespace, list[str]]:
     return args, [sys.argv[0], *remaining]
 
 if __name__ == '__main__':
+    # Start the Qt application and show the slider window.
     args, qt_argv = parse_args()
     app = QApplication(qt_argv)
     ex = GrippingApp(hand=args.hand, iface=args.iface, domain_id=args.domain_id)

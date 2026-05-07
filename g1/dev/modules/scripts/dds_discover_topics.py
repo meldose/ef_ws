@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+"""Inspect DDS discovery traffic and print matching topics, publishers, and subscribers.
+
+This helps beginners see what DDS entities are visible on a chosen interface and
+domain. The optional filter keeps the output focused on robot-related topics.
+"""
+
 import argparse
 import time
 
@@ -10,6 +16,8 @@ from cyclonedds.domain import Domain, DomainParticipant
 from unitree_sdk2py.core import channel as channel_module
 
 
+# Override the SDK DDS configuration so discovery uses the interface requested
+# on the command line instead of a default interface.
 channel_module.ChannelConfigHasInterface = """<?xml version="1.0" encoding="UTF-8" ?>
 <CycloneDDS>
   <Domain Id="any">
@@ -23,6 +31,7 @@ channel_module.ChannelConfigHasInterface = """<?xml version="1.0" encoding="UTF-
 
 
 def parse_args() -> argparse.Namespace:
+    # Accept the interface, DDS domain, discovery time, and output filter.
     parser = argparse.ArgumentParser(description="List DDS topics discovered on an interface.")
     parser.add_argument("--iface", default="eth0")
     parser.add_argument("--domain-id", type=int, default=0)
@@ -32,12 +41,14 @@ def parse_args() -> argparse.Namespace:
 
 
 def text_matches(text: str, pattern: str) -> bool:
+    # Small helper so the filter can be provided as a regular expression.
     import re
 
     return re.search(pattern, text, flags=re.IGNORECASE) is not None
 
 
 def print_samples(label: str, samples: list[object], pattern: str) -> None:
+    # Print only the discovered DDS entities that match the filter expression.
     print(f"\n{label}:")
     found = False
     for sample in samples:
@@ -54,6 +65,8 @@ def print_samples(label: str, samples: list[object], pattern: str) -> None:
 
 
 def main() -> int:
+    # Create a DDS participant, read the built-in discovery topics for a while,
+    # then print the collected topics, publications, and subscriptions.
     args = parse_args()
     config = channel_module.ChannelConfigHasInterface.replace("$__IF_NAME__$", args.iface)
     domain = Domain(args.domain_id, config)
@@ -68,6 +81,7 @@ def main() -> int:
     pubs: list[object] = []
     subs: list[object] = []
 
+    # Repeatedly take discovery samples until the requested time expires.
     while time.time() < deadline:
         topics.extend(topic_reader.take(100) or [])
         pubs.extend(pub_reader.take(100) or [])
@@ -78,6 +92,7 @@ def main() -> int:
     print_samples("Topics", topics, args.filter)
     print_samples("Publications", pubs, args.filter)
     print_samples("Subscriptions", subs, args.filter)
+    # Explicit cleanup keeps the temporary DDS domain object from lingering.
     del domain
     return 0
 

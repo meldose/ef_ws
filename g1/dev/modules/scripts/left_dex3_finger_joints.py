@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+"""Send direct joint targets to the left Dex3 hand.
+
+Beginners can use this script in two ways: choose a preset such as open/closed,
+or provide custom joint values. The script resolves those inputs into a final
+7-joint target list and publishes it for a short hold period.
+"""
+
 import argparse
 import os
 import sys
 
 
+# Make the shared parent module directory importable when run as a script.
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
 if PARENT_DIR not in sys.path:
@@ -26,6 +34,7 @@ except ImportError as exc:
 
 
 def parse_args() -> argparse.Namespace:
+    # Accept several ways to describe the desired finger pose.
     parser = argparse.ArgumentParser(
         description="Move only the left dex3 hand finger joints."
     )
@@ -92,16 +101,19 @@ def parse_args() -> argparse.Namespace:
     requested_modes = sum(
         value is not None for value in (args.preset, args.alpha, args.targets)
     )
+    # Only one input mode is allowed so the final target pose is unambiguous.
     if requested_modes > 1:
         parser.error("Use only one of --preset, --alpha, or --targets.")
     return args
 
 
 def blend_targets(alpha: float) -> list[float]:
+    # Convert a 0.0-1.0 blend into the same percentage scale used by grip helpers.
     return hand_grip_targets("left", float(alpha) * 100.0)
 
 
 def resolve_targets(args: argparse.Namespace) -> list[float]:
+    # Turn whichever CLI mode was chosen into one final list of joint values.
     if args.targets is not None:
         return [float(value) for value in args.targets]
     if args.preset == "open":
@@ -114,6 +126,7 @@ def resolve_targets(args: argparse.Namespace) -> list[float]:
 
 
 def main() -> int:
+    # Resolve the target pose, build a hand message, then publish it.
     args = parse_args()
     targets = resolve_targets(args)
 
